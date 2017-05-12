@@ -8,28 +8,47 @@ describe 'message', :type => :feature do
     wait_for_element('#team_menu')
     @channel_name = "test" + (rand(6).to_i).to_s
     # want a clean slate to test in
-    #create_channel(channel_name)
+    create_channel(@channel_name)
   end
 
-  it 'deletes a channel' do
-      click_link('test1')
-      archive_channel('test1')
-      delete_channel('test1')
-  end
-
-  it 'sends a message to slackbot' do
-    within '#direct_messages' do
-      click_link('slackbot')
+  it 'appears in starred list' do
+    within '#channels' do
+      click_link @channel_name
     end
     within '.ql-editor' do
-      send_message('p' ,'poop')
+      @message = "the sky is blue" # TODO generate random phrases
+      send_message('p' , @message)
     end
     find('.ql-editor').send_keys(:enter)
-    binding.pry
+    # now find the star in the first message
+    within first('.message_content_header').hover do
+      click('span.message_star_holder button')
+    end
+    click_button 'stars_toggle'
+    expect(find('#stars_scroller')).to have_content(@message)
+  end
+
+  it 'is searchable by has:star' do
+    within '#channels' do
+      click_link @channel_name
+    end
+    within '.ql-editor' do
+      @message = "the grass is green" # TODO generate random phrases
+      send_message('p' , @message)
+    end
+    find('.ql-editor').send_keys(:enter)
+    # now find the star in the first message
+    within first('.message_content_header').hover do
+      click('span.message_star_holder button')
+    end
+    fill_in('search_terms', with: 'has:star')
+    find('#search_terms').send_keys(:enter)
+    expect(find('#search_results_items')).to have_content(@message)
   end
 
   after do
-    archive_channel(@channel_name)
+    # clean up
+    archive_channel
     delete_channel(@channel_name)
   end
 end

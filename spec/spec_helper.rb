@@ -1,7 +1,6 @@
 require 'capybara/rspec'
 require 'selenium-webdriver'
 require 'dotenv/load'
-require 'pry'
 require 'holdon'
 Dotenv.load('../.env')
 
@@ -11,20 +10,23 @@ Capybara.register_driver :selenium do |app|
   Capybara::Selenium::Driver.new(app, browser: :chrome)
 end
 
+def click(element)
+  find(element).click
+end
+
 def create_channel(channel_name)
    #create new chat room to test in
-   within 'channels' do
-     click_button 'new_channel_btn'
+   within '#channels' do
+     click('button[data-action="create_channel"]')
   end
   #wait_for_element('#channel_create_title')
-  fill_in '#channel_create_title', with: channel_name
+  fill_in 'channel_create_title', with: channel_name
   click_button 'save_channel'
 end
 
-def delete_channel(channel_name)
+def delete_channel(channel_name = 'test1')
   # can't create a new channel with the same name if it's only archived
-  # would love to learn the short cut to this
-  click_button 'channels_header'
+  click_button 'Channels'
   click_link 'View archived channels...'
   click_link channel_name
   confirm = window_opened_by do
@@ -41,9 +43,9 @@ end
 def archive_channel
   # delete chat room after testing to ensure clean slate
   click_button('channel_actions_toggle')
-  click_link('channel_advanced_item')
-  click_link('Archive this channel')
-  click_link('Yes, archive the channel')
+  click('#channel_advanced_item')
+  click('div[data-action="channel_archive_btn"]')
+  click_button('Yes, archive the channel')
 end
 
 def login
